@@ -1,5 +1,3 @@
-A log by golang
-
 This log can output file,slice base on size or day.
 
 Example：
