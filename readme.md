@@ -15,4 +15,5 @@ func main(){
 
 
 Console output:
->>>>>>>>> Temporary merge branch 2I1008 17:03:11.553111    [8460] hello   - test/main.go:6
+
+I1008 17:03:11.553111    [8460] hello   - test/main.go:6
