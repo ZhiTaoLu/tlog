@@ -16,13 +16,18 @@ const (
 )
 
 func checkLogFile(typ logType, f *logFile) {
+	if f == nil {
+		refreshLogfile(typ)
+		return
+	}
+
 	if !checkTime(f.creatTime) {
-		refreshLogfile(date, typ)
+		refreshLogfile(typ)
 		return
 	}
 
 	if checkSize(f.file) {
-		refreshLogfile(size, typ)
+		refreshLogfile(typ)
 	}
 }
 
@@ -36,7 +41,7 @@ func checkTime(cTime string) bool {
 	return getCurrTime() == cTime
 }
 
-func refreshLogfile(rTyp refreType, typ logType) {
+func refreshLogfile(typ logType) {
 	oldFile := pMyLogSystem.loggerFile[typ]
 	if oldFile != nil {
 		oldFile.file.Close()

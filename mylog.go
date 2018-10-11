@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var bMarkFile bool = true
+var bMarkFile bool = false
 
 type logType int8
 
@@ -51,26 +51,29 @@ func init() {
 }
 
 func (this *myLogSystem) genLogHandler() bool {
-	logDir := genPath()
-	if logDir == "" {
-		return false
+	logDir := ""
+
+	if bMarkFile {
+		logDir = genPath()
+		if logDir == "" {
+			return false
+		}
 	}
 
 	for k, v := range this.logFileTyp {
-		fileName := logFileInit(logDir, v, 0)
+		if bMarkFile {
+			fileName := logFileInit(logDir, v, 0)
+			pLogFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+			if err != nil {
+				return false
+			}
 
-		//if bMarkFile {
-		pLogFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			return false
+			if this.loggerFile[k] != nil {
+				this.loggerFile[k].file.Close()
+			}
+
+			this.loggerFile[k] = &logFile{file: pLogFile, creatTime: getCurrTime()}
 		}
-
-		if this.loggerFile[k] != nil {
-			this.loggerFile[k].file.Close()
-		}
-
-		this.loggerFile[k] = &logFile{file: pLogFile, creatTime: getCurrTime()}
-		//}
 
 		log2 := log.New(os.Stderr, "", 0)
 		if log2 == nil {
