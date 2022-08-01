@@ -1,12 +1,15 @@
-package mlog
+package tlog
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"time"
 )
 
 const logfilesize = 512 * 1024 * 1024
+
+var logbasepath = "/home/dgd/kiseki_log"
+var clearfile = false
 
 type refreType int
 
@@ -14,6 +17,14 @@ const (
 	date refreType = iota
 	size
 )
+
+func SetClearFile(v bool) {
+	clearfile = v
+}
+
+func SetLogsPath(path string) {
+	logbasepath = path
+}
 
 func checkLogFile(typ logType, f *logFile) {
 	if f == nil {
@@ -23,6 +34,7 @@ func checkLogFile(typ logType, f *logFile) {
 
 	if !checkTime(f.creatTime) {
 		refreshLogfile(typ)
+		clearFile(f.creatTime, genPath(), pTaoLogSystem.logFileTyp[typ], 0)
 		return
 	}
 
@@ -42,26 +54,26 @@ func checkTime(cTime string) bool {
 }
 
 func refreshLogfile(typ logType) {
-	oldFile := pMyLogSystem.loggerFile[typ]
+	oldFile := pTaoLogSystem.loggerFile[typ]
 	if oldFile != nil {
 		oldFile.file.Close()
 	}
 
 	path := genPath()
-	fileName := logFileInit(path, pMyLogSystem.logFileTyp[typ], 0)
+	fileName := logFileInit(path, pTaoLogSystem.logFileTyp[typ], 0)
 
 	pLogFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return
 	}
 
-	pMyLogSystem.loggerFile[typ] = &logFile{file: pLogFile, creatTime: getCurrTime()}
+	pTaoLogSystem.loggerFile[typ] = &logFile{file: pLogFile, creatTime: getCurrTime()}
 }
 
 func getCurrTime() string {
 	currTime := time.Now()
 	y, m, d := currTime.Date()
-	return fmt.Sprintf("%02d%02d%02d", y, m, d)
+	return fmt.Sprintf("%02d%02d%02d%02d", y, m, d, currTime.Hour())
 }
 
 func pathExists(path string) (bool, error) {
@@ -76,7 +88,7 @@ func pathExists(path string) (bool, error) {
 }
 
 func logFileInit(logDir, v string, index int) string {
-	fileName := logDir + v + "-" + time.Now().Format("20060102") + fmt.Sprintf("-%v", index) + ".log"
+	fileName := logDir + v + "-" + time.Now().Format("2006010215") + fmt.Sprintf("-%v", index) + ".log"
 	b, _ := pathExists(fileName)
 	if b {
 		return logFileInit(logDir, v, index+1)
@@ -88,20 +100,27 @@ func logFileInit(logDir, v string, index int) string {
 }
 
 func genPath() string {
-	t := time.Now()
-	logDir := "syslog/"
-	if _, err := os.Stat(logDir); !(err == nil || os.IsExist(err)) {
-		if merr := os.Mkdir(logDir, os.ModeDir); merr != nil {
-			return ""
-		}
+	logDir := fmt.Sprintf("%v/%v/", logbasepath, "inputs")
+	if appName == "" {
+		logDir = fmt.Sprintf("%v/%v/", logbasepath, "inputs")
 	}
 
-	logDir += t.Format("2006-01/")
 	if _, err := os.Stat(logDir); !(err == nil || os.IsExist(err)) {
-		if merr := os.Mkdir(logDir, os.ModeDir); merr != nil {
+		if merr := os.MkdirAll(logDir, os.ModeDir); merr != nil {
+			fmt.Println(merr)
 			return ""
 		}
 	}
 
 	return logDir
+}
+
+func clearFile(creatTime, logDir, v string, index int) {
+	handletime, _ := time.ParseInLocation("2006010215", creatTime, time.Local)
+	fileName := logDir + v + "-" + handletime.Add(time.Hour * 1 * -1).Format("2006010215") + fmt.Sprintf("-%v", index) + ".log"
+	b, _ := pathExists(fileName)
+	if b {
+		os.Remove(fileName)
+		clearFile(creatTime, logDir, v, index+1)
+	}
 }
