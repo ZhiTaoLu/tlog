@@ -52,7 +52,8 @@ const (
 type logType int8
 
 const (
-	infoLog logType = iota
+	markLog logType = iota
+	infoLog
 	warningLog
 	errorLog
 )
@@ -60,6 +61,7 @@ const (
 const severityChar = "IWE"
 
 var logLevel = map[logType]string{
+	markLog:  "mark",
 	infoLog:  "info",
 	errorLog: "error",
 }
@@ -80,6 +82,7 @@ func Init(name string) {
 		logFileTyp: make(map[logType]string),
 	}
 
+	pTaoLogSystem.logFileTyp[markLog] = "Mark"
 	pTaoLogSystem.logFileTyp[infoLog] = "Info"
 	pTaoLogSystem.logFileTyp[errorLog] = "Err"
 
@@ -181,6 +184,11 @@ func SetOutputTyp(bConsole, bWrite, bClear bool) {
 //	outputPre(infoLog, fmt.Sprintf(format, args...))ls
 //}
 
+func Markj(msg string, args ...interface{}) {
+	//args = append(args, pMyLogSystem.genFlieLine())
+	outputPreJson(markLog, msg, args...)
+}
+
 func Infoj(msg string, args ...interface{}) {
 	//args = append(args, pMyLogSystem.genFlieLine())
 	outputPreJson(infoLog, msg, args...)
@@ -251,7 +259,7 @@ func outputPreJson(typ logType, msg string, args ...interface{}) {
 
 	currTime := time.Now()
 	logF := logStru{
-		//Level:   logLevel[typ],
+		Level:   logLevel[typ],
 		AppName: appName,
 		TimeU:   float64(currTime.UnixNano()) / 1000000000,
 		TimeS:   currTime.Format("2006-01-02T15:04:05.000+0800"),
@@ -290,6 +298,13 @@ func output(typ logType, logstr string) {
 	}
 
 	if bMarkFile {
+		if typ == markLog {
+			checkLogFile(markLog, pTaoLogSystem.loggerFile[markLog])
+			pLog.SetOutput(pTaoLogSystem.loggerFile[markLog].file)
+			pLog.Output(2, logstr)
+			return
+		}
+
 		if typ != infoLog {
 			checkLogFile(infoLog, pTaoLogSystem.loggerFile[infoLog])
 			pLog.SetOutput(pTaoLogSystem.loggerFile[infoLog].file)

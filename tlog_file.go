@@ -117,7 +117,7 @@ func genPath() string {
 
 func clearFile(creatTime, logDir, v string, index int) {
 	handletime, _ := time.ParseInLocation("2006010215", creatTime, time.Local)
-	fileName := logDir + v + "-" + handletime.Add(time.Hour * 1 * -1).Format("2006010215") + fmt.Sprintf("-%v", index) + ".log"
+	fileName := logDir + v + "-" + handletime.Add(time.Hour*1*-1).Format("2006010215") + fmt.Sprintf("-%v", index) + ".log"
 	b, _ := pathExists(fileName)
 	if b {
 		os.Remove(fileName)
