@@ -1,4 +1,4 @@
-module tlog
+module github.com/ZhiTaoLu/tlog
 
 go 1.16
 
